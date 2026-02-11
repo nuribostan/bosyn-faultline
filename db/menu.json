@@ -1,0 +1,35 @@
+{
+  "top": [
+    {
+      "title": "Dashboard",
+      "href": "/",
+      "icon": "Dashboard"
+    },
+
+    {
+      "title": "Projects",
+      "href": "/projects",
+      "icon": "Projects"
+    },
+
+    {
+      "title": "Logs",
+      "href": "/logs",
+      "icon": "Logs"
+    },
+
+    {
+      "title": "Notifications",
+      "href": "/notifications",
+      "icon": "Bell"
+    }
+  ],
+
+  "bottom": [
+    {
+      "title": "Settings",
+      "href": "/settings",
+      "icon": "Settings"
+    }
+  ]
+}
