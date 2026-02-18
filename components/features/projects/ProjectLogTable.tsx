@@ -84,8 +84,9 @@ export function ProjectLogTable({
         <LogPopup
           log={selectedLog}
           onClose={() => setSelectedLog(null)}
-          onDelete={(id) => {
-            if (onLogDeleted) onLogDeleted(id);
+          // 🚀 GÜNCELLEME: onDelete yerine onDeleteSuccess kullanıyoruz
+          onDeleteSuccess={() => {
+            if (onLogDeleted) onLogDeleted(selectedLog.id);
             setSelectedLog(null); 
           }}
         />
