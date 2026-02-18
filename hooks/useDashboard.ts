@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { LogService } from "@/services/logService";
 import { ErrorLog, DashboardStats } from "@/types";
 
@@ -20,9 +20,10 @@ export function useDashboard() {
     LogService.getBrands().then(setBrands);
   }, []);
 
-  useEffect(() => {
-    async function fetchData() {
-      setLoading(true);
+  const fetchLogs = useCallback(
+    async (showLoading: boolean = true) => {
+      if (showLoading) setLoading(true);
+
       try {
         const data = await LogService.getLogs(selectedBrand);
         setLogs(data);
@@ -36,11 +37,23 @@ export function useDashboard() {
       } catch (error) {
         console.error("Dashboard veri hatası:", error);
       } finally {
-        setLoading(false);
+        if (showLoading) setLoading(false);
       }
-    }
-    fetchData();
-  }, [selectedBrand]);
+    },
+    [selectedBrand],
+  );
+
+  useEffect(() => {
+    fetchLogs(true);
+  }, [fetchLogs]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchLogs(false);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [fetchLogs]);
 
   return {
     logs,
@@ -49,5 +62,6 @@ export function useDashboard() {
     setSelectedBrand,
     stats,
     loading,
+    refetch: () => fetchLogs(false),
   };
 }

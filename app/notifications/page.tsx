@@ -5,14 +5,21 @@ import PageTitle from "@/components/ui/pageTitle";
 import { Bell, X, Clock, CheckCircle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { tr } from "date-fns/locale";
+import { useRouter } from "next/navigation";
 
 export default function NotificationsPage() {
-  const { notifications, removeNotification } = useNotification();
+  const { notifications, removeNotification, markAsRead } = useNotification();
+  const router = useRouter();
+
+  const handleNotificationClick = (id: string, brand: string) => {
+    markAsRead(id); 
+    router.push(`/projects/${brand}`); 
+  };
 
   return (
     <div className="min-h-screen w-full text-slate-800 animate-in fade-in duration-500">
       <div className="mb-8">
-        <PageTitle title="Notifications" subTitle="System Alerts" />
+        <PageTitle title="Bildirimler" subTitle="Sistem Uyarıları" />
         <p className="text-slate-400 text-sm mt-1">
           Sistemdeki tüm uyarı ve hata bildirim geçmişi.
         </p>
@@ -38,11 +45,17 @@ export default function NotificationsPage() {
               {notifications.map((item) => (
                 <div
                   key={item.id}
-                  className="p-6 flex items-start gap-4 hover:bg-slate-50 transition group"
+                  onClick={() => handleNotificationClick(item.id, item.brand)}
+                  className={`p-6 flex items-start gap-4 transition group cursor-pointer ${
+                    !item.isRead ? "bg-blue-50/30 hover:bg-blue-50/50" : "hover:bg-slate-50"
+                  }`}
                 >
                   <div className="shrink-0 mt-1">
-                    <div className="h-10 w-10 bg-red-50 text-red-500 rounded-full flex items-center justify-center">
+                    <div className="h-10 w-10 bg-red-50 text-red-500 rounded-full flex items-center justify-center relative">
                       <Bell size={20} />
+                      {!item.isRead && (
+                        <span className="absolute top-0 right-0 h-2.5 w-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+                      )}
                     </div>
                   </div>
 
@@ -65,7 +78,10 @@ export default function NotificationsPage() {
                   </div>
 
                   <button
-                    onClick={() => removeNotification(item.id)}
+                    onClick={(e) => {
+                      e.stopPropagation(); // Yönlendirmeyi engeller, sadece siler!
+                      removeNotification(item.id);
+                    }}
                     className="p-2 text-slate-300 hover:text-red-600 hover:bg-red-50 rounded-lg transition opacity-0 group-hover:opacity-100"
                     title="Bildirimi Sil"
                   >

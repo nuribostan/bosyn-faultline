@@ -8,17 +8,14 @@ import { formatDistanceToNow } from "date-fns";
 import { tr } from "date-fns/locale";
 
 export function NotificationBell() {
-  const { notifications, unreadCount, removeNotification } = useNotification();
+  const { notifications, unreadCount, removeNotification, markAllAsRead } = useNotification();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     }
@@ -26,13 +23,26 @@ export function NotificationBell() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const handleToggleDropdown = () => {
+    setIsOpen(!isOpen);
+
+    if (!isOpen && unreadCount > 0) {
+      markAllAsRead();
+    }
+  };
+
+  const handleNotificationClick = (brand: string) => {
+    setIsOpen(false);
+    router.push(`/projects/${brand}`); 
+  };
+
   const recentNotifications = notifications.slice(0, 3);
 
   return (
     <div className="fixed top-6 right-8 z-50 max-lg:top-4 max-lg:right-24" ref={dropdownRef}>
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="relative p-3 bg-white rounded-full  transition-all text-slate-600 hover:text-blue-600 active:scale-95"
+        onClick={handleToggleDropdown}
+        className="relative p-3 bg-white rounded-full transition-all text-slate-600 hover:text-blue-600 active:scale-95 shadow-sm border border-slate-100"
       >
         <Bell size={24} />
 
@@ -49,15 +59,15 @@ export function NotificationBell() {
             <h4 className="font-bold text-slate-700 text-sm">Bildirimler</h4>
             {notifications.length > 0 && (
               <button
-                onClick={() => router.push("/notifications")}
+                onClick={() => { setIsOpen(false); router.push("/notifications"); }}
                 className="text-xs text-blue-600 hover:underline font-medium"
               >
-                Tümünü Gör ({unreadCount})
+                Tümünü Gör
               </button>
             )}
           </div>
 
-          <div className="max-h-75 overflow-y-auto">
+          <div className="max-h-75 overflow-y-auto custom-scrollbar">
             {recentNotifications.length === 0 ? (
               <div className="p-8 text-center text-slate-400 text-sm flex flex-col items-center gap-2">
                 <CheckCheck size={24} className="opacity-50" />
@@ -68,17 +78,15 @@ export function NotificationBell() {
               recentNotifications.map((notif) => (
                 <div
                   key={notif.id}
-                  className="p-4 border-b border-slate-50 hover:bg-slate-50/80 transition group relative"
+                  onClick={() => handleNotificationClick(notif.brand)}
+                  className={`p-4 border-b border-slate-50 hover:bg-slate-50 transition group relative cursor-pointer ${!notif.isRead ? 'bg-blue-50/20' : 'bg-white'}`}
                 >
                   <div className="pr-6">
                     <p className="text-sm font-semibold text-slate-800 line-clamp-2">
                       {notif.message}
                     </p>
                     <span className="text-[10px] font-bold text-slate-400 mt-1 block uppercase tracking-wide">
-                      {formatDistanceToNow(notif.timestamp, {
-                        addSuffix: true,
-                        locale: tr,
-                      })}
+                      {formatDistanceToNow(notif.timestamp, { addSuffix: true, locale: tr })}
                     </span>
                   </div>
 
@@ -96,7 +104,6 @@ export function NotificationBell() {
             )}
           </div>
 
-          {/* Footer */}
           {notifications.length > 3 && (
             <div className="p-2 bg-slate-50 text-center border-t border-slate-100">
               <span className="text-xs text-slate-400">

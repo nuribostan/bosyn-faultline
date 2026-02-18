@@ -6,8 +6,15 @@ import PageTitle from "@/components/ui/pageTitle";
 import { useDashboard } from "@/hooks/useDashboard";
 
 export default function Home() {
-  const { logs, brands, selectedBrand, setSelectedBrand, stats, loading } =
-    useDashboard();
+  const {
+    logs,
+    brands,
+    selectedBrand,
+    setSelectedBrand,
+    stats,
+    loading,
+    refetch,
+  } = useDashboard();
 
   return (
     <div className="w-full h-full flex flex-col gap-6 justify-start items-start">
@@ -15,7 +22,7 @@ export default function Home() {
 
       <div className="page-content w-full flex flex-col gap-6 justify-start items-start">
         <div className="w-full flex-1 overflow-y-auto min-h-0 bg-white rounded-xl shadow-sm border border-slate-200">
-          <LogTable logs={logs} loading={loading} />
+          <LogTable logs={logs} loading={loading} onLogDeleted={refetch} />
         </div>
 
         <ErrorCounter

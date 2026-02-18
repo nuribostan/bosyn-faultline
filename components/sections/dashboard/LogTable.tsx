@@ -6,9 +6,10 @@ import { truncateText } from "@/lib/utils";
 interface LogTableProps {
   logs: ErrorLog[];
   loading: boolean;
+  onLogDeleted: () => void;
 }
 
-export function LogTable({ logs, loading }: LogTableProps) {
+export function LogTable({ logs, loading, onLogDeleted }: LogTableProps) {
   const [selectedLog, setSelectedLog] = useState<ErrorLog | null>(null);
 
   if (loading) return <TableSkeleton />;
@@ -78,7 +79,14 @@ export function LogTable({ logs, loading }: LogTableProps) {
       </div>
 
       {selectedLog && (
-        <LogPopup log={selectedLog} onClose={() => setSelectedLog(null)} />
+        <LogPopup
+          log={selectedLog}
+          onClose={() => setSelectedLog(null)}
+          onDeleteSuccess={() => {
+            setSelectedLog(null);
+            onLogDeleted();
+          }}
+        />
       )}
     </>
   );

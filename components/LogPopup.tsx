@@ -20,9 +20,10 @@ interface LogPopupProps {
   log: ErrorLog;
   onClose: () => void;
   onDelete?: (id: number) => void;
+  onDeleteSuccess: () => void;
 }
 
-export function LogPopup({ log, onClose, onDelete }: LogPopupProps) {
+export function LogPopup({ log, onClose, onDeleteSuccess }: LogPopupProps) {
   const [copied, setCopied] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -56,7 +57,8 @@ export function LogPopup({ log, onClose, onDelete }: LogPopupProps) {
     setIsDeleting(true);
     try {
       await LogService.deleteLog(log.id);
-      if (onDelete) onDelete(log.id);
+
+      onDeleteSuccess();
       onClose();
     } catch (error) {
       console.error("Silme hatası:", error);

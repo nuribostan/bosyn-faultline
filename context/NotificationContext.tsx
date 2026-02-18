@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from "react";
 import { supabase } from "@/lib/supabase";
 import { ErrorLog } from "@/types";
 
@@ -8,6 +14,7 @@ export interface NotificationItem {
   id: string;
   message: string;
   brand: string;
+  test_id: string; 
   timestamp: Date;
   isRead: boolean;
 }
@@ -17,18 +24,25 @@ interface NotificationContextType {
   unreadCount: number;
   removeNotification: (id: string) => void;
   markAllAsRead: () => void;
+  markAsRead: (id: string) => void; 
 }
 
-const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
+const NotificationContext = createContext<NotificationContextType | undefined>(
+  undefined,
+);
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const unreadCount = notifications.length;
 
+  // 🚀 DÜZELTME 1: Artık toplam sayıyı değil, SADECE okunmayanları sayıyor
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   useEffect(() => {
     if ("Notification" in window) {
-      if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+      if (
+        Notification.permission !== "granted" &&
+        Notification.permission !== "denied"
+      ) {
         Notification.requestPermission().then((permission) => {
           if (permission === "granted") {
             console.log("Bildirim izni verildi!");
@@ -38,51 +52,51 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-
   const triggerAlert = (brand: string, message: string) => {
-
     try {
-      const audio = new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3");
+      const audio = new Audio(
+        "https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3",
+      );
       audio.volume = 0.5;
-      audio.play().catch((e) => console.warn("Otomatik oynatma engellendi (Sekme aktif değil):", e));
+      audio
+        .play()
+        .catch((e) => console.warn("Otomatik oynatma engellendi:", e));
     } catch (error) {
       console.error("Ses hatası:", error);
     }
 
     if ("Notification" in window && Notification.permission === "granted") {
-      if (document.hidden) {
-        new Notification(`🚨 ${brand} Hatası!`, {
-          body: message,
-          icon: "/icon-192x192.png", 
-          tag: "faultline-error", 
-          silent: false, 
-        });
-      }
+      new Notification(`🚨 ${brand} Hatası!`, {
+        body: message,
+        icon: "/icon-192x192.png",
+        tag: crypto.randomUUID(),
+        requireInteraction: true,
+      });
     }
   };
 
   useEffect(() => {
     const channel = supabase
-      .channel('realtime-errors')
+      .channel("realtime-errors")
       .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'error_logs' },
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "error_logs" },
         (payload) => {
           const newLog = payload.new as ErrorLog;
-          const msg = `${newLog.brand || 'Bilinmeyen Marka'}: ${newLog.error_type} hatası tespit edildi.`;
+          const msg = `${newLog.brand || "Bilinmeyen Marka"}: ${newLog.error_type} hatası tespit edildi.`;
 
           const newNotification: NotificationItem = {
             id: crypto.randomUUID(),
             message: msg,
             brand: newLog.brand,
+            test_id: newLog.test_id,
             timestamp: new Date(),
             isRead: false,
           };
 
           setNotifications((prev) => [newNotification, ...prev]);
-          
           triggerAlert(newLog.brand, newLog.message);
-        }
+        },
       )
       .subscribe();
 
@@ -96,11 +110,25 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   };
 
   const markAllAsRead = () => {
-    setNotifications([]); 
+    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+  };
+
+  const markAsRead = (id: string) => {
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)),
+    );
   };
 
   return (
-    <NotificationContext.Provider value={{ notifications, unreadCount, removeNotification, markAllAsRead }}>
+    <NotificationContext.Provider
+      value={{
+        notifications,
+        unreadCount,
+        removeNotification,
+        markAllAsRead,
+        markAsRead,
+      }}
+    >
       {children}
     </NotificationContext.Provider>
   );
@@ -109,7 +137,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 export function useNotification() {
   const context = useContext(NotificationContext);
   if (context === undefined) {
-    throw new Error("useNotification must be used within a NotificationProvider");
+    throw new Error(
+      "useNotification must be used within a NotificationProvider",
+    );
   }
   return context;
 }
