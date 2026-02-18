@@ -86,6 +86,7 @@ export function LogTable({ logs, loading, onLogDeleted }: LogTableProps) {
             setSelectedLog(null);
             onLogDeleted();
           }}
+          
         />
       )}
     </>

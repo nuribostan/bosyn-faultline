@@ -19,7 +19,6 @@ import { LogService } from "@/services/logService";
 interface LogPopupProps {
   log: ErrorLog;
   onClose: () => void;
-  onDelete?: (id: number) => void;
   onDeleteSuccess: () => void;
 }
 
